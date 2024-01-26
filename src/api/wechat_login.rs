@@ -16,9 +16,9 @@ pub struct WeChatLoginRequest {
 pub struct WeChatLoginAPIResponse {
     pub session_key: Option<String>,
     pub unionid: Option<String>,
-    pub errmsg: String,
+    pub errmsg: Option<String>,
     pub openid: Option<String>,
-    pub errcode: i32,
+    pub errcode: Option<i32>,
 }
 
 #[derive(Serialize)]
@@ -110,19 +110,20 @@ pub async fn wechat_login_service(
             let json_res = serde_json::from_str::<WeChatLoginAPIResponse>(&text_res);
 
             match json_res {
-                Ok(json_value) if json_value.errcode == 0 => match get_token(db, &json_value).await
-                {
-                    Ok(token) => Ok(Json(WeChatLoginResponse { token })),
-                    Err(e) => {
-                        dbg!(e);
-                        Err(Status::BadGateway)
+                Ok(json_value) if json_value.errcode.is_none() => {
+                    match get_token(db, &json_value).await {
+                        Ok(token) => Ok(Json(WeChatLoginResponse { token })),
+                        Err(e) => {
+                            dbg!(e);
+                            Err(Status::BadGateway)
+                        }
                     }
-                },
+                }
                 Ok(json_value) => match json_value.errcode {
-                    -1 => Err(Status::ServiceUnavailable),
-                    40029 => Err(Status::BadRequest),
-                    40226 => Err(Status::Forbidden),
-                    45011 => Err(Status::TooManyRequests),
+                    Some(-1) => Err(Status::ServiceUnavailable),
+                    Some(40029) => Err(Status::BadRequest),
+                    Some(40226) => Err(Status::Forbidden),
+                    Some(45011) => Err(Status::TooManyRequests),
                     _ => Err(Status::NotImplemented),
                 },
                 Err(e) => {
