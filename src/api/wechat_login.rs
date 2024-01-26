@@ -14,10 +14,10 @@ pub struct WeChatLoginRequest {
 
 #[derive(Deserialize)]
 pub struct WeChatLoginAPIResponse {
-    pub session_key: String,
-    pub unionid: String,
+    pub session_key: Option<String>,
+    pub unionid: Option<String>,
     pub errmsg: String,
-    pub openid: String,
+    pub openid: Option<String>,
     pub errcode: i32,
 }
 
@@ -32,20 +32,24 @@ async fn get_token(
 ) -> anyhow::Result<Uuid> {
     let db = db as &DatabaseConnection;
 
+    let openid = resp.openid.clone().unwrap();
+
     let user = match AppUser::find()
-        .filter(app_user::Column::WechatId.eq(&resp.openid))
+        .filter(app_user::Column::WechatId.eq(openid.clone()))
         .one(db)
         .await?
     {
         Some(user) => user,
         None => {
             let user = app_user::ActiveModel {
-                wechat_id: Set(resp.openid.clone()),
+                wechat_id: Set(openid),
                 ..Default::default()
             };
             user.insert(db).await?
         }
     };
+
+    let session_key = resp.session_key.clone().unwrap();
 
     let token = match WeChatSession::find()
         .filter(we_chat_session::Column::UserId.eq(user.id))
@@ -54,7 +58,7 @@ async fn get_token(
     {
         Some(token) => {
             let token = we_chat_session::ActiveModel {
-                last_session: Set(resp.session_key.clone()),
+                last_session: Set(session_key),
                 ..token.into()
             };
             token.update(db).await?
@@ -62,7 +66,7 @@ async fn get_token(
         None => {
             let token = we_chat_session::ActiveModel {
                 user_id: Set(user.id),
-                last_session: Set(resp.session_key.clone()),
+                last_session: Set(session_key),
                 ..Default::default()
             };
             token.insert(db).await?
