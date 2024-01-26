@@ -93,7 +93,10 @@ pub async fn wechat_login_service(
         Ok(res) if res.status().is_success() => match res.json::<WeChatLoginAPIResponse>().await {
             Ok(json_value) if json_value.errcode == 0 => match get_token(db, &json_value).await {
                 Ok(token) => Ok(Json(WeChatLoginResponse { token })),
-                Err(_) => Err(Status::BadGateway),
+                Err(e) => {
+                    dbg!(e);
+                    Err(Status::BadGateway)
+                }
             },
             Ok(json_value) => match json_value.errcode {
                 -1 => Err(Status::ServiceUnavailable),
@@ -102,8 +105,18 @@ pub async fn wechat_login_service(
                 45011 => Err(Status::TooManyRequests),
                 _ => Err(Status::NotImplemented),
             },
-            Err(_) => Err(Status::BadGateway),
+            Err(e) => {
+                dbg!(e);
+                Err(Status::BadGateway)
+            }
         },
-        _ => Err(Status::InternalServerError),
+        Ok(res) => {
+            dbg!(res);
+            Err(Status::InternalServerError)
+        }
+        Err(e) => {
+            dbg!(e);
+            Err(Status::InternalServerError)
+        }
     }
 }
