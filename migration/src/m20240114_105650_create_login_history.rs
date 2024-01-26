@@ -11,29 +11,35 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(LoginHistory::Table)
+                    .table(WeChatSession::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(LoginHistory::Id)
+                        ColumnDef::new(WeChatSession::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(LoginHistory::UserId)
+                        ColumnDef::new(WeChatSession::UserId)
                             .uuid()
                             .unique_key()
                             .not_null(),
                     )
                     .col(
-                        ColumnDef::new(LoginHistory::LastLogin)
+                        ColumnDef::new(WeChatSession::LastLogin)
                             .date_time()
                             .not_null()
                             .default(Expr::cust("now()")),
                     )
                     .col(
-                        ColumnDef::new(LoginHistory::LastToken)
+                        ColumnDef::new(WeChatSession::LastSession)
+                            .string_len(30)
+                            .not_null()
+                            .unique_key(),
+                    )
+                    .col(
+                        ColumnDef::new(WeChatSession::LastToken)
                             .uuid()
                             .unique_key()
                             .not_null()
@@ -47,7 +53,7 @@ impl MigrationTrait for Migration {
             .create_foreign_key(
                 ForeignKey::create()
                     .name("fk_login_history_user_id")
-                    .from(LoginHistory::Table, LoginHistory::UserId)
+                    .from(WeChatSession::Table, WeChatSession::UserId)
                     .to(AppUser::Table, AppUser::Id)
                     .to_owned(),
             )
@@ -58,23 +64,24 @@ impl MigrationTrait for Migration {
         manager
             .drop_foreign_key(
                 ForeignKey::drop()
-                    .table(LoginHistory::Table)
+                    .table(WeChatSession::Table)
                     .name("fk_login_history_user_id")
                     .to_owned(),
             )
             .await?;
 
         manager
-            .drop_table(Table::drop().table(LoginHistory::Table).to_owned())
+            .drop_table(Table::drop().table(WeChatSession::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum LoginHistory {
+enum WeChatSession {
     Table,
     Id,
     UserId,
     LastLogin,
+    LastSession,
     LastToken,
 }
