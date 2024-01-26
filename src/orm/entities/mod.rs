@@ -3,5 +3,5 @@
 pub mod prelude;
 
 pub mod app_user;
-pub mod login_history;
 pub mod sea_orm_active_enums;
+pub mod we_chat_session;

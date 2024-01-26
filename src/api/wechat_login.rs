@@ -5,7 +5,7 @@ use sea_orm::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::orm::entities::{app_user, login_history, prelude::*};
+use crate::orm::entities::{app_user, prelude::*, we_chat_session};
 
 const WECHAT_API: &str = "https://api.weixin.qq.com/sns/jscode2session";
 
@@ -49,33 +49,27 @@ async fn get_token(
         }
     };
 
-    let mut token = match LoginHistory::find()
-        .filter(login_history::Column::UserId.eq(user.id))
+    let token = match WeChatSession::find()
+        .filter(we_chat_session::Column::UserId.eq(user.id))
         .one(db)
         .await?
     {
-        Some(token) => token,
+        Some(token) => {
+            let token = we_chat_session::ActiveModel {
+                last_session: Set(resp.session_key.clone()),
+                ..token.into()
+            };
+            token.update(db).await?
+        }
         None => {
-            let token = login_history::ActiveModel {
+            let token = we_chat_session::ActiveModel {
                 user_id: Set(user.id),
+                last_session: Set(resp.session_key.clone()),
                 ..Default::default()
             };
             token.insert(db).await?
         }
     };
-
-    if chrono::Local::now()
-        .naive_local()
-        .signed_duration_since(token.last_login)
-        > chrono::Duration::hours(6)
-    {
-        token.delete(db).await?;
-        let t = login_history::ActiveModel {
-            user_id: Set(user.id),
-            ..Default::default()
-        };
-        token = t.insert(db).await?;
-    }
 
     Ok(token.last_token)
 }
