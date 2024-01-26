@@ -3,7 +3,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, Qu
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::orm::entities::{app_user, prelude::*, we_chat_session};
+use crate::orm::entities::{app_user, prelude::*, sea_orm_active_enums::UserRole, we_chat_session};
 
 const WECHAT_API: &str = "https://api.weixin.qq.com/sns/jscode2session";
 
@@ -43,6 +43,7 @@ async fn get_token(
         None => {
             let user = app_user::ActiveModel {
                 wechat_id: Set(openid),
+                user_role: Set(UserRole::Normal),
                 ..Default::default()
             };
             user.insert(db).await?
