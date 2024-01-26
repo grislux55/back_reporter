@@ -94,17 +94,12 @@ pub async fn wechat_login_service(
         .send()
         .await;
 
-    dbg!(&response);
-
     match response {
         Ok(res) if res.status().is_success() => {
             let text_res = match res.text().await {
-                Ok(text) => {
-                    dbg!(&text);
-                    text
-                }
+                Ok(text) => text,
                 Err(e) => {
-                    dbg!(e);
+                    eprintln!("{}", e);
                     return Err(Status::BadGateway);
                 }
             };
@@ -115,7 +110,7 @@ pub async fn wechat_login_service(
                     match get_token(db, &json_value).await {
                         Ok(token) => Ok(Json(WeChatLoginResponse { token })),
                         Err(e) => {
-                            dbg!(e);
+                            eprintln!("{}", e);
                             Err(Status::BadGateway)
                         }
                     }
@@ -128,7 +123,7 @@ pub async fn wechat_login_service(
                     _ => Err(Status::NotImplemented),
                 },
                 Err(e) => {
-                    dbg!(e);
+                    eprintln!("{}", e);
                     Err(Status::BadGateway)
                 }
             }

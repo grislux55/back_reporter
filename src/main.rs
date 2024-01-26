@@ -2,15 +2,10 @@ mod api;
 mod orm;
 
 use api::wechat_login::wechat_login_service;
-use rocket::{get, routes};
+use rocket::routes;
 
 const APPID: &str = "your_appid";
 const SECRET: &str = "your_secret";
-
-#[get("/")]
-fn hello_world() -> String {
-    "Hello, world!".to_string()
-}
 
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
@@ -20,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
 
     app = app.manage(db);
 
-    app = app.mount("/", routes![hello_world, wechat_login_service]);
+    app = app.mount("/", routes![wechat_login_service]);
 
     app.launch().await?;
 
