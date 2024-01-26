@@ -173,6 +173,7 @@ dependencies = [
  "rocket",
  "sea-orm",
  "serde",
+ "serde_json",
  "uuid",
 ]
 
