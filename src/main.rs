@@ -1,7 +1,10 @@
 mod api;
 mod orm;
 
-use api::wechat_login::wechat_login_service;
+use api::{
+    user_info::{add_user_info, delete_user_info, query_user_info, set_user_info},
+    wechat_login::wechat_login_service,
+};
 use rocket::routes;
 
 const APPID: &str = "your_appid";
@@ -16,6 +19,15 @@ async fn main() -> anyhow::Result<()> {
     app = app.manage(db);
 
     app = app.mount("/", routes![wechat_login_service]);
+    app = app.mount(
+        "/",
+        routes![
+            query_user_info,
+            add_user_info,
+            delete_user_info,
+            set_user_info
+        ],
+    );
 
     app.launch().await?;
 
