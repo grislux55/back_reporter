@@ -88,11 +88,20 @@ pub async fn query_user_info(
     Ok(Json(user_infos))
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AddUserInfo {
+    pub id_no: String,
+    pub name: String,
+    pub phone: String,
+    pub address: String,
+    pub image: Option<Uuid>,
+}
+
 #[post("/user-info/add", data = "<user_info>")]
 pub async fn add_user_info(
     db: &State<DatabaseConnection>,
     token: BearerToken,
-    user_info: Json<UserInfo>,
+    user_info: Json<AddUserInfo>,
 ) -> Result<Json<UserInfo>, Status> {
     let db = db as &DatabaseConnection;
     let token = token.token;
@@ -116,9 +125,7 @@ pub async fn add_user_info(
         None => return Err(Status::Unauthorized),
     };
 
-    let UserInfo {
-        id: _,
-        creator: _,
+    let AddUserInfo {
         id_no,
         name,
         phone,
