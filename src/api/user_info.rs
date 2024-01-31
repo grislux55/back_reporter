@@ -16,8 +16,8 @@ use crate::orm::entities::{app_user, prelude::*};
 use super::{validate_token, BearerToken};
 
 #[derive(Serialize, Deserialize)]
-pub struct UserInfo {
-    pub id: Option<Uuid>,
+pub struct UserInfoResponse {
+    pub user_info_id: Uuid,
     pub creator: Uuid,
     pub id_no: String,
     pub name: String,
@@ -37,7 +37,7 @@ pub async fn query_user_info(
     db: &State<DatabaseConnection>,
     token: BearerToken,
     query: UserInfoRequest,
-) -> Result<Json<Vec<UserInfo>>, Status> {
+) -> Result<Json<Vec<UserInfoResponse>>, Status> {
     let db = db as &DatabaseConnection;
     let token = token.token;
 
@@ -69,8 +69,8 @@ pub async fn query_user_info(
     {
         Ok(op) => op
             .into_iter()
-            .map(|x| UserInfo {
-                id: Some(x.id),
+            .map(|x| UserInfoResponse {
+                user_info_id: x.id,
                 creator: x.creator,
                 id_no: x.id_no,
                 name: x.name,
@@ -89,7 +89,7 @@ pub async fn query_user_info(
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct AddUserInfo {
+pub struct AddingUserInfo {
     pub id_no: String,
     pub name: String,
     pub phone: String,
@@ -101,8 +101,8 @@ pub struct AddUserInfo {
 pub async fn add_user_info(
     db: &State<DatabaseConnection>,
     token: BearerToken,
-    user_info: Json<AddUserInfo>,
-) -> Result<Json<UserInfo>, Status> {
+    user_info: Json<AddingUserInfo>,
+) -> Result<Json<UserInfoResponse>, Status> {
     let db = db as &DatabaseConnection;
     let token = token.token;
 
@@ -125,7 +125,7 @@ pub async fn add_user_info(
         None => return Err(Status::Unauthorized),
     };
 
-    let AddUserInfo {
+    let AddingUserInfo {
         id_no,
         name,
         phone,
@@ -151,8 +151,8 @@ pub async fn add_user_info(
         }
     };
 
-    Ok(Json(UserInfo {
-        id: Some(user_info.id),
+    Ok(Json(UserInfoResponse {
+        user_info_id: user_info.id,
         creator: user_info.creator,
         id_no: user_info.id_no,
         name: user_info.name,
