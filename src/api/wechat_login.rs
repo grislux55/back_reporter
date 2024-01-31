@@ -24,12 +24,13 @@ pub struct WeChatLoginAPIResponse {
 #[derive(Serialize)]
 pub struct WeChatLoginResponse {
     pub token: Uuid,
+    pub role: String,
 }
 
-async fn get_token(
+async fn get_token_and_role(
     db: &State<DatabaseConnection>,
     resp: &WeChatLoginAPIResponse,
-) -> anyhow::Result<Uuid> {
+) -> anyhow::Result<(Uuid, String)> {
     let db = db as &DatabaseConnection;
 
     let openid = resp.openid.clone().unwrap();
@@ -49,6 +50,13 @@ async fn get_token(
             user.insert(db).await?
         }
     };
+
+    let user_role = match user.user_role {
+        UserRole::Admin => "admin",
+        UserRole::Subadmin => "subadmin",
+        UserRole::Normal => "normal",
+    }
+    .to_owned();
 
     let session_key = resp.session_key.clone().unwrap();
 
@@ -74,7 +82,7 @@ async fn get_token(
         }
     };
 
-    Ok(token.last_token)
+    Ok((token.last_token, user_role))
 }
 
 #[post("/wechat-login", format = "json", data = "<info>")]
@@ -107,8 +115,8 @@ pub async fn wechat_login_service(
 
             match json_res {
                 Ok(json_value) if json_value.errcode.is_none() => {
-                    match get_token(db, &json_value).await {
-                        Ok(token) => Ok(Json(WeChatLoginResponse { token })),
+                    match get_token_and_role(db, &json_value).await {
+                        Ok((token, role)) => Ok(Json(WeChatLoginResponse { token, role })),
                         Err(e) => {
                             eprintln!("{}", e);
                             Err(Status::BadGateway)
