@@ -20,12 +20,7 @@ impl MigrationTrait for Migration {
                             .unique_key()
                             .default(Expr::cust("uuid_generate_v4()")),
                     )
-                    .col(
-                        ColumnDef::new(UserInfo::Creator)
-                            .uuid()
-                            .unique_key()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(UserInfo::Creator).uuid().not_null())
                     .col(ColumnDef::new(UserInfo::IdNo).string_len(20).not_null())
                     .col(ColumnDef::new(UserInfo::Name).string_len(32).not_null())
                     .col(ColumnDef::new(UserInfo::Phone).string_len(20).not_null())
