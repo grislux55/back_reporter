@@ -12,3 +12,13 @@ pub enum UserRole {
     #[sea_orm(string_value = "subadmin")]
     Subadmin,
 }
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "validated")]
+pub enum Validated {
+    #[sea_orm(string_value = "blocked")]
+    Blocked,
+    #[sea_orm(string_value = "pass")]
+    Pass,
+    #[sea_orm(string_value = "pending")]
+    Pending,
+}

@@ -1,4 +1,8 @@
-use sea_orm_migration::prelude::*;
+use sea_orm_migration::{
+    prelude::*,
+    sea_orm::{EnumIter, Iterable},
+    sea_query::extension::postgres::Type,
+};
 
 use crate::m20220101_000001_create_user_table::AppUser;
 
@@ -35,6 +39,12 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(UserInfo::Phone).string_len(20).not_null())
                     .col(ColumnDef::new(UserInfo::Address).string_len(64).not_null())
                     .col(ColumnDef::new(UserInfo::Image).uuid())
+                    .col(
+                        ColumnDef::new(UserInfo::Validated)
+                            .enumeration(Validated::Table, Validated::iter().skip(1))
+                            .not_null()
+                            .default(Expr::cust("'pending'")),
+                    )
                     .to_owned(),
             )
             .await?;
