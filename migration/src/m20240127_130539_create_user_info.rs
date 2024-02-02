@@ -9,6 +9,15 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
+            .create_type(
+                Type::create()
+                    .as_enum(Validated::Table)
+                    .values(Validated::iter().skip(1))
+                    .to_owned(),
+            )
+            .await?;
+
+        manager
             .create_table(
                 Table::create()
                     .table(UserInfo::Table)
@@ -52,6 +61,10 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
+            .drop_type(Type::drop().name(Validated::Table).to_owned())
+            .await?;
+
+        manager
             .drop_table(Table::drop().table(UserInfo::Table).to_owned())
             .await
     }
@@ -67,4 +80,13 @@ enum UserInfo {
     Phone,
     Address,
     Image,
+    Validated,
+}
+
+#[derive(DeriveIden, EnumIter)]
+pub enum Validated {
+    Table,
+    Pending,
+    Pass,
+    Blocked,
 }
